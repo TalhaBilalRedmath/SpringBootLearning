@@ -78,15 +78,24 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/login").permitAll()
-                        .requestMatchers("/swagger-ui/index.html","/swagger-ui/**").permitAll()
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/configuration/**",
+                                "/webjars/**"
+                        ).permitAll()
+                        .requestMatchers("/swagger-ui/index.html", "/swagger-ui/**").permitAll()
                         .requestMatchers("/actuator").permitAll()
                         .requestMatchers("/putTesting.html", "/users").permitAll()
-                        .requestMatchers("/api/getContacts", "/api/saveContact","/h2-console/**").permitAll()
+                        .requestMatchers("/api/getContacts", "/api/saveContact", "/h2-console/**").permitAll()
                         .requestMatchers("/users/add").authenticated()
-                        .requestMatchers("/api/deleteAll", "/deleteUser/{id}","/updateContact").hasRole("ADMIN")
+                        .requestMatchers("/api/deleteAll", "/deleteUser/{id}", "/updateContact").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .httpBasic(Customizer.withDefaults())
+                .httpBasic(config -> config.disable())
                 .oauth2Login(oauth -> oauth
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oAuthConfig)

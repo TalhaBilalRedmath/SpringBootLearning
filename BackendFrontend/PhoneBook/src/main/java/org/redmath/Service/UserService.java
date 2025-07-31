@@ -2,6 +2,8 @@ package org.redmath.Service;
 
 import org.redmath.Model.User;
 import org.redmath.Repository.UserRepo;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -10,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 //
 
@@ -46,8 +49,13 @@ public class UserService implements UserDetailsService{
         );
     }
 
-    public void deleteUser(String id) {
-        Long value = Long.parseLong(id);
-        rep.deleteById(value);
+    public boolean deleteUser(Long id) {
+        Optional<User> user = rep.findById(id);
+        if(user.isEmpty()){
+            return false;
+        }
+
+        rep.deleteById(id);
+        return true;
     }
 }

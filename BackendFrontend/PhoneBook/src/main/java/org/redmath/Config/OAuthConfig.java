@@ -65,5 +65,4 @@ public class OAuthConfig implements OAuth2UserService<OAuth2UserRequest, OAuth2U
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
         return new DefaultOAuth2User(authorities, oauth2User.getAttributes(), "email");
     }
-
 }
