@@ -1,0 +1,11 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+training,org.redmath.Config,OAuthConfig,68,10,2,0,14,4,2,2,1,2
+training,org.redmath.Config,SecurityConfig,60,195,0,0,20,32,2,13,2,13
+training,org.redmath.Model,Contact,9,3,0,0,4,1,1,1,1,1
+training,org.redmath.Service,ListService,31,22,2,0,9,8,4,3,3,3
+training,org.redmath.Service,UserService,0,67,0,0,0,18,0,6,0,6
+training,org.redmath.Controller,LoginController,25,97,1,1,8,25,1,2,0,2
+training,org.redmath.Controller,LoginController.LoginRequest,9,3,0,0,4,1,1,1,1,1
+training,org.redmath.Controller,Controller,26,28,0,0,7,9,4,4,4,4
+training,org.redmath.Controller,UserController,0,20,0,0,0,8,0,4,0,4
+training,org.redmath,Main,6,6,0,0,2,3,1,1,1,1

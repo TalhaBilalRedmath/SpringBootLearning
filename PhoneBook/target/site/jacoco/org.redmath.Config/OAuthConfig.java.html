@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OAuthConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">training</a> &gt; <a href="index.source.html" class="el_package">org.redmath.Config</a> &gt; <span class="el_source">OAuthConfig.java</span></div><h1>OAuthConfig.java</h1><pre class="source lang-java linenums">package org.redmath.Config;
+
+import lombok.extern.slf4j.Slf4j;
+import org.redmath.Model.User;
+import org.redmath.Repository.ContactRep;
+import org.redmath.Repository.UserRepo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+<span class="fc" id="L20">@Slf4j</span>
+@Service
+public class OAuthConfig implements OAuth2UserService&lt;OAuth2UserRequest, OAuth2User&gt; {
+
+    @Autowired
+    private UserRepo userRepo;
+
+    @Autowired
+    private ContactRep contactRep;
+
+<span class="fc" id="L30">    public OAuthConfig() {</span>
+<span class="fc" id="L31">        System.out.println(&quot;✅ OAuthConfig constructor initialized&quot;);</span>
+<span class="fc" id="L32">    }</span>
+
+    @Override
+    public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+<span class="nc" id="L36">        System.out.println(&quot;✅ OAuthConfig LOADUSER initialized&quot;);</span>
+
+        // Load user from Google
+<span class="nc" id="L39">        OAuth2User oauth2User = new DefaultOAuth2UserService().loadUser(userRequest);</span>
+<span class="nc" id="L40">        String email = oauth2User.getAttribute(&quot;email&quot;);</span>
+<span class="nc" id="L41">        String name = oauth2User.getAttribute(&quot;username&quot;);</span>
+
+<span class="nc" id="L43">        System.out.println(&quot;Processing OAuth user: &quot; + email);</span>
+
+
+
+        // Check if user exists as teacher first
+<span class="nc" id="L48">        User admin = userRepo.findByEmail(email);</span>
+<span class="nc" id="L49">        String role = admin.getRole();</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (admin != null) {</span>
+<span class="nc" id="L51">            System.out.println(&quot;✅ Admin exists: &quot; + admin.getUsername());</span>
+<span class="nc" id="L52">            System.out.println(&quot;ROLE: &quot; + admin.getRole());</span>
+        } else {
+<span class="nc" id="L54">            System.out.println(&quot;❌ User not found in database: &quot; + email);</span>
+<span class="nc" id="L55">            throw new OAuth2AuthenticationException(&quot;User with email &quot; + email + &quot; not registered&quot;);</span>
+        }
+
+<span class="nc" id="L58">        List&lt;GrantedAuthority&gt; authorities = List.of(new SimpleGrantedAuthority(role));</span>
+<span class="nc" id="L59">        return new DefaultOAuth2User(authorities, oauth2User.getAttributes(), &quot;email&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

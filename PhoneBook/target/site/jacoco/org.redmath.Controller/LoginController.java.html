@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LoginController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">training</a> &gt; <a href="index.source.html" class="el_package">org.redmath.Controller</a> &gt; <span class="el_source">LoginController.java</span></div><h1>LoginController.java</h1><pre class="source lang-java linenums">package org.redmath.Controller;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.redmath.Service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.*;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api&quot;)
+<span class="fc" id="L20">public class LoginController {</span>
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtEncoder jwtEncoder;
+
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;?&gt; login(@RequestBody LoginRequest loginRequest) {
+        try {
+<span class="fc" id="L34">            System.out.println(&quot;🔍 Login attempt for username: &quot; + loginRequest.getUsername());</span>
+
+<span class="fc" id="L36">            UserDetails userDetails = userService.loadUserByUsername(loginRequest.getUsername());</span>
+
+<span class="fc" id="L38">            System.out.println(&quot;🔍 User found: &quot; + userDetails.getUsername());</span>
+<span class="fc" id="L39">            System.out.println(&quot;🔍 Stored password (BCrypt): &quot; + userDetails.getPassword());</span>
+<span class="fc" id="L40">            System.out.println(&quot;🔍 Input password (raw): &quot; + loginRequest.getPassword());</span>
+<span class="fc" id="L41">            System.out.println(&quot;🔐 Authorities in token: &quot; + userDetails.getAuthorities());</span>
+
+<span class="fc" id="L43">            boolean passwordMatches = passwordEncoder.matches(loginRequest.getPassword(), userDetails.getPassword());</span>
+<span class="fc" id="L44">            System.out.println(&quot;🔍 Password matches: &quot; + passwordMatches);</span>
+
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">            if (!passwordMatches) {</span>
+<span class="nc" id="L47">                System.out.println(&quot;❌ Password validation failed&quot;);</span>
+<span class="nc" id="L48">                return ResponseEntity.badRequest()</span>
+<span class="nc" id="L49">                        .body(Map.of(&quot;error&quot;, &quot;Invalid credentials&quot;));</span>
+            }
+
+<span class="fc" id="L52">            System.out.println(&quot;✅ Password validation successful&quot;);</span>
+
+<span class="fc" id="L54">            long expirySeconds = 3600;</span>
+<span class="fc" id="L55">            JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();</span>
+
+<span class="fc" id="L57">            JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()</span>
+<span class="fc" id="L58">                    .subject(userDetails.getUsername())</span>
+<span class="fc" id="L59">                    .claim(&quot;authorities&quot;, userDetails.getAuthorities().stream()</span>
+<span class="fc" id="L60">                            .map(GrantedAuthority::getAuthority)</span>
+<span class="fc" id="L61">                            .toList())</span>
+<span class="fc" id="L62">                    .expiresAt(Instant.now().plusSeconds(expirySeconds))</span>
+<span class="fc" id="L63">                    .build();</span>
+
+<span class="fc" id="L65">            Jwt jwt = jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));</span>
+
+<span class="fc" id="L67">            return ResponseEntity.ok(Map.of(</span>
+                    &quot;token_type&quot;, &quot;Bearer&quot;,
+<span class="fc" id="L69">                    &quot;access_token&quot;, jwt.getTokenValue(),</span>
+<span class="fc" id="L70">                    &quot;expires_in&quot;, expirySeconds,</span>
+<span class="fc" id="L71">                    &quot;email&quot;, userDetails.getUsername()</span>
+            ));
+
+<span class="nc" id="L74">        } catch (Exception e) {</span>
+<span class="nc" id="L75">            System.out.println(&quot;❌ Login error: &quot; + e.getMessage());</span>
+<span class="nc" id="L76">            e.printStackTrace();</span>
+<span class="nc" id="L77">            return ResponseEntity.badRequest()</span>
+<span class="nc" id="L78">                    .body(Map.of(&quot;error&quot;, &quot;Invalid credentials: &quot; + e.getMessage()));</span>
+        }
+    }
+
+    // DTO for login request
+    @Getter
+    @Setter
+    public static class LoginRequest {
+        private String username;
+        private String password;
+
+        // Constructors
+<span class="fc" id="L90">        public LoginRequest() {}</span>
+
+<span class="nc" id="L92">        public LoginRequest(String username, String password) {</span>
+<span class="nc" id="L93">            this.username = username;</span>
+<span class="nc" id="L94">            this.password = password;</span>
+<span class="nc" id="L95">        }</span>
+
+
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

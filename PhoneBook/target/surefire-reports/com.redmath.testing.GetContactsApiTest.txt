@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.redmath.testing.GetContactsApiTest
+-------------------------------------------------------------------------------
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 18.32 s -- in com.redmath.testing.GetContactsApiTest

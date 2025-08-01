@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">training</a> &gt; <a href="index.source.html" class="el_package">org.redmath.Config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package org.redmath.Config;
+
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import org.redmath.Service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+
+import javax.crypto.spec.SecretKeySpec;
+import java.time.Instant;
+
+@Configuration
+@EnableWebSecurity
+@OpenAPIDefinition(
+        info = @Info(title = &quot;Your API&quot;, version = &quot;v1&quot;),
+        security = @SecurityRequirement(name = &quot;bearerAuth&quot;) // 🔐 Require bearerAuth globally
+)
+@SecurityScheme(
+        name = &quot;bearerAuth&quot;,
+        type = SecuritySchemeType.HTTP,
+        scheme = &quot;bearer&quot;,
+        bearerFormat = &quot;JWT&quot;
+)
+
+<span class="fc" id="L45">public class SecurityConfig {</span>
+
+    @Autowired
+    private OAuthConfig oAuthConfig; // Your custom OAuth2 user service
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+<span class="fc" id="L52">        return new BCryptPasswordEncoder();</span>
+    }
+
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+<span class="fc" id="L58">        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();</span>
+<span class="fc" id="L59">        authoritiesConverter.setAuthoritiesClaimName(&quot;authorities&quot;);</span>
+<span class="fc" id="L60">        authoritiesConverter.setAuthorityPrefix(&quot;&quot;);</span>
+
+<span class="fc" id="L62">        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();</span>
+<span class="fc" id="L63">        converter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);</span>
+<span class="fc" id="L64">        return converter;</span>
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, UserService userService, JwtEncoder jwtEncoder) throws Exception {
+<span class="fc" id="L69">        System.out.println(&quot;Security config loaded&quot;);</span>
+<span class="fc" id="L70">        return http</span>
+<span class="fc" id="L71">                .csrf(csrf -&gt; csrf.disable())</span>
+<span class="fc" id="L72">                .sessionManagement(session -&gt; session</span>
+<span class="fc" id="L73">                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))</span>
+<span class="fc" id="L74">                .authorizeHttpRequests(auth -&gt; auth</span>
+<span class="fc" id="L75">                        .requestMatchers(&quot;/api/login&quot;).permitAll()</span>
+<span class="fc" id="L76">                        .requestMatchers(&quot;/swagger-ui/index.html&quot;,&quot;/swagger-ui/**&quot;).permitAll()</span>
+<span class="fc" id="L77">                        .requestMatchers(&quot;/actuator&quot;).permitAll()</span>
+<span class="fc" id="L78">                        .requestMatchers(&quot;/putTesting.html&quot;, &quot;/users&quot;).permitAll()</span>
+<span class="fc" id="L79">                        .requestMatchers(&quot;/api/getContacts&quot;, &quot;/api/saveContact&quot;, &quot;/deleteUser/{id}&quot;).permitAll()</span>
+<span class="fc" id="L80">                        .requestMatchers(&quot;/h2-console/**&quot;, &quot;/users/add&quot;).authenticated()</span>
+<span class="fc" id="L81">                        .requestMatchers(&quot;/api/deleteAll&quot;).hasRole(&quot;ADMIN&quot;)</span>
+<span class="fc" id="L82">                        .anyRequest().authenticated()</span>
+                )
+<span class="fc" id="L84">                .httpBasic(Customizer.withDefaults())</span>
+<span class="fc" id="L85">                .oauth2Login(oauth -&gt; oauth</span>
+<span class="fc" id="L86">                        .userInfoEndpoint(userInfo -&gt; userInfo</span>
+<span class="fc" id="L87">                                .userService(oAuthConfig)</span>
+                        )
+<span class="fc" id="L89">                        .successHandler((request, response, authentication) -&gt; {</span>
+<span class="nc" id="L90">                            System.out.println(&quot;✅ OAuth2 login successful&quot;);</span>
+<span class="nc" id="L91">                            generateJwtResponse(response, authentication, jwtEncoder);</span>
+<span class="nc" id="L92">                            response.getWriter().flush();</span>
+<span class="nc" id="L93">                        })</span>
+                )
+<span class="fc" id="L95">                .oauth2ResourceServer(oauth2 -&gt; oauth2</span>
+<span class="fc" id="L96">                        .jwt(jwt -&gt; jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))</span>
+                )
+<span class="fc" id="L98">                .build();</span>
+    }
+
+    private void generateJwtResponse(jakarta.servlet.http.HttpServletResponse response,
+                                     org.springframework.security.core.Authentication auth,
+                                     JwtEncoder jwtEncoder) throws java.io.IOException {
+<span class="nc" id="L104">        long expirySeconds = 3600;</span>
+<span class="nc" id="L105">        JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();</span>
+
+<span class="nc" id="L107">        JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()</span>
+<span class="nc" id="L108">                .subject(auth.getName())</span>
+<span class="nc" id="L109">                .claim(&quot;authorities&quot;, auth.getAuthorities().stream()</span>
+<span class="nc" id="L110">                        .map(GrantedAuthority::getAuthority)</span>
+<span class="nc" id="L111">                        .toList())</span>
+<span class="nc" id="L112">                .expiresAt(Instant.now().plusSeconds(expirySeconds))</span>
+<span class="nc" id="L113">                .build();</span>
+
+<span class="nc" id="L115">        Jwt jwt = jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, jwtClaimsSet));</span>
+<span class="nc" id="L116">        String tokenResponse = &quot;{\&quot;token_type\&quot;:\&quot;Bearer\&quot;,\&quot;access_token\&quot;:\&quot;&quot; + jwt.getTokenValue()</span>
+<span class="nc" id="L117">                + &quot;\&quot;,\&quot;expires_in\&quot;:&quot; + expirySeconds + &quot;,\&quot;email\&quot;:\&quot;&quot; + auth.getName() + &quot;\&quot;}&quot;;</span>
+
+<span class="nc" id="L119">        response.setContentType(&quot;application/json&quot;);</span>
+<span class="nc" id="L120">        response.getWriter().print(tokenResponse);</span>
+<span class="nc" id="L121">        response.getWriter().flush();</span>
+<span class="nc" id="L122">    }</span>
+
+    @Bean
+    public JwtEncoder jwtEncoder(@Value(&quot;${jwt.signing.key}&quot;) byte[] signingKey) {
+<span class="fc" id="L126">        return new NimbusJwtEncoder(new ImmutableSecret&lt;&gt;(new SecretKeySpec(signingKey, &quot;HmacSHA256&quot;)));</span>
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder(@Value(&quot;${jwt.signing.key}&quot;) byte[] signingKey) {
+<span class="fc" id="L131">        return NimbusJwtDecoder.withSecretKey(new SecretKeySpec(signingKey, &quot;HmacSHA256&quot;)).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

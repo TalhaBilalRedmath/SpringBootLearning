@@ -1,5 +1,5 @@
 package org.redmath.Service;
-
+import java.util.NoSuchElementException;
 import org.redmath.Model.Contact;
 import org.redmath.Repository.ContactRep;
 import org.springframework.stereotype.Service;
@@ -25,6 +25,9 @@ public class ListService {
     }
     public void deleteContact(String id){
         int value = Integer.parseInt(id);
+        if (!repo.existsById(value)) {
+            throw new NoSuchElementException("No contact found with ID: " + value);
+        }
         repo.deleteById(value);
     }
     public List<Contact> getAllContacts(){
