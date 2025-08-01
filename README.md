@@ -1,5 +1,8 @@
 # Spring Boot Learning
 
+BackendFrontend Folder for the final product
+
+
 Two types of Models:
 User (Used for Login)
 Contacts (Data Stored)
@@ -24,4 +27,3 @@ Manual endpoint /api/login (For Postman login testing)
  
 + UnitTesting + testing of APIs on POSTMAN 
 Jacoco test coverage = 65% (For now)
-
