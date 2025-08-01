@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Phone Book</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        input, button {
+            margin: 5px;
+            padding: 8px;
+        }
+        ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        li {
+            padding: 8px;
+            border-bottom: 1px solid #ccc;
+        }
+        .contact-actions {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Phone Book</h1>
+
+<input id="name" type="text" placeholder="Enter Name"/>
+<input id="number" type="text" placeholder="Enter Number"/>
+<button onclick="sendPut()">Add Contact</button>
+<button onclick="deleteAll()">Delete All</button>
+<div id="contacts-list" style="margin-top: 30px;">
+    <h2>Contacts:</h2>
+    <ul id="contacts"></ul>
+</div>
+
+<script>
+    function getContacts() {
+        fetch('/api/getContacts', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        })
+        .then(response => response.json())
+        .then(data => {
+            const list = document.getElementById('contacts');
+            list.innerHTML = ''; // Clear previous list
+
+            if (data.length === 0) {
+                list.innerHTML = '<li>No contacts found.</li>';
+                return;
+            }
+
+            data.forEach(contact => {
+                const li = document.createElement('li');
+                li.textContent = `ID: ${contact.id}, Name: ${contact.name}, Number: ${contact.number}`;
+
+                // DELETE button
+                const delBtn = document.createElement('button');
+                delBtn.textContent = 'Delete';
+                delBtn.className = 'contact-actions';
+                delBtn.onclick = () => deleteContact(contact.name,contact.id);
+
+                // UPDATE button
+                const updateBtn = document.createElement('button');
+                updateBtn.textContent = 'Update';
+                updateBtn.className = 'contact-actions';
+                updateBtn.onclick = () => updateContactPrompt(contact.id, contact.name, contact.number);
+
+
+                li.appendChild(updateBtn);
+                li.appendChild(delBtn);
+                list.appendChild(li);
+            });
+        })
+        .catch(err => alert('Error: ' + err));
+    }
+
+function deleteAll() {
+    fetch(`/api/deleteAll`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (response.ok) {
+            alert(`Deleted All Contacts`);
+            getContacts();
+        } else {
+            alert('Failed to delete all Contacts');
+        }
+    })
+    .catch(err => alert('Error: ' + err));
+}
+    function sendPut() {
+    const name = document.getElementById('name').value.trim();
+    const number = document.getElementById('number').value.trim();
+
+    if (!name || !number) {
+        alert('Please enter both name and number.');
+        return;
+    }
+
+    const obj = { name, number };
+
+    fetch('/api/saveContact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(obj)
+    })
+    .then(async response => {
+        if (response.ok) {
+            alert(' Contact Saved!');
+            document.getElementById('name').value = '';
+            document.getElementById('number').value = '';
+            getContacts();
+        } else if (response.status === 400) {
+            const errorData = await response.json();
+            let messages = Object.values(errorData).join('\n');
+            alert('Validation Error:\n' + messages);
+        } else {
+            alert('Failed to save contact.');
+        }
+    })
+    .catch(err => {
+        alert('Error: ' + err.message);
+    });
+}
+
+
+    function deleteContact(name,id) {
+        if (!confirm(`Are you sure you want to delete contact: ${name}?`)) return;
+
+        fetch(`/api/deleteContact/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                alert(`Deleted ${name}`);
+                getContacts();
+            } else {
+                alert('Failed to delete contact');
+            }
+        })
+        .catch(err => alert('Error: ' + err));
+    }
+
+    function updateContactPrompt(id, currentName, currentNumber) {
+    const newName = prompt(`Enter new name:`, currentName);
+    const newNumber = prompt(`Enter new number:`, currentNumber);
+
+    if (newName && newNumber) {
+        updateContact(id, newName.trim(), newNumber.trim());
+    }
+}
+
+function updateContact(id, name, number) {
+    const obj = { id, name, number };
+
+    fetch('/api/updateContact', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(obj)
+    })
+    .then(response => {
+        if (response.ok) {
+            alert(`Updated contact: ${name}`);
+            getContacts();
+        } else {
+            alert('Failed to update contact');
+        }
+    })
+    .catch(err => alert('Error: ' + err));
+}
+
+    // Load contacts when page loads
+    window.onload = getContacts;
+</script>
+
+</body>
+</html>

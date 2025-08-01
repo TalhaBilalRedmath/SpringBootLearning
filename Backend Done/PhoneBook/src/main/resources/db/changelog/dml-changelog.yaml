@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2
+      author: talha
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: "talha"
+              - column:
+                  name: password
+                  value: "$2a$10$otQ/xP2cDkzYeyOTDY0qru1PEw2/u4Z6FsqNWGnzjR8hFGDQ8voKa"
+              - column:
+                  name: role
+                  value: "ROLE_ADMIN"
+              - column:
+                  name: email
+                  value: "talha.bilal.redm@gmail.com"
