@@ -26,4 +26,4 @@ Oauth2 with Google and github
 Manual endpoint /api/login (For Postman login testing)
  
 + UnitTesting + testing of APIs on POSTMAN 
-Jacoco test coverage = 65% (For now)
+Jacoco test coverage = 76% (For now)
