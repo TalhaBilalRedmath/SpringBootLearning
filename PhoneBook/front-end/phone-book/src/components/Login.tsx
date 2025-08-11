@@ -12,7 +12,7 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
       const email = urlParams.get('email');
-      
+      console.log("API HIT", token, email);
       if (token) {
         // Store token and set logged in state
         localStorage.setItem('jwt', token);
@@ -67,6 +67,7 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
         },
       });
 

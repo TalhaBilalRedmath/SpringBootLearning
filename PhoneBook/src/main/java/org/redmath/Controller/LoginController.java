@@ -17,6 +17,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = {
+        "http://localhost:3000",
+        "https://wlcwv7bc-3000.inc1.devtunnels.ms"
+})
 public class LoginController {
 
     @Autowired
