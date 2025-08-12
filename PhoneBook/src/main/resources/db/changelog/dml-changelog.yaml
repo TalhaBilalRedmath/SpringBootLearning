@@ -32,4 +32,4 @@ databaseChangeLog:
                   value: "ROLE_ADMIN"
               - column:
                   name: email
-                  value: "talha.bilal.redm@gmail.com"
+                  value: "talhabilalofficial@gmail.com"
