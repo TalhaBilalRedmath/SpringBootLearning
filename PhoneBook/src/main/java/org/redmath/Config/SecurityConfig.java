@@ -92,7 +92,7 @@ public class SecurityConfig {
                         .requestMatchers("/putTesting.html", "/users").permitAll()
                         .requestMatchers("/api/getContacts", "/api/saveContact", "/h2-console/**").permitAll()
                         .requestMatchers("/users/add").authenticated()
-                        .requestMatchers("/api/deleteAll", "/deleteUser/{id}", "/updateContact").hasRole("ADMIN")
+                        .requestMatchers("/api/deleteAll", "/api/deleteContact/{id}", "/api/updateContact").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .httpBasic(config -> config.disable())

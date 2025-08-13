@@ -29,7 +29,7 @@ databaseChangeLog:
                   value: "$2a$10$otQ/xP2cDkzYeyOTDY0qru1PEw2/u4Z6FsqNWGnzjR8hFGDQ8voKa"
               - column:
                   name: role
-                  value: "ROLE_ADMIN"
+                  value: "ROLE_USER"
               - column:
                   name: email
                   value: "talhabilalofficial@gmail.com"
