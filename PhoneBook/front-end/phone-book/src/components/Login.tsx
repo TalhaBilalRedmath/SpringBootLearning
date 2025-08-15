@@ -58,6 +58,7 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
     }
     return null;
   };
+  
 
   // Helper function to verify token validity
   const verifyToken = async (token: string) => {
@@ -86,15 +87,19 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
 
   
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+     await fetch('/csrf', { 
+      method: 'GET',
+      credentials: 'include'
+    });
 
-    // Create FormData for form login (Spring Security expects form data, not JSON)
+
     const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
-    const csrfToken = getCookie('XSRF-TOKEN');
+    const csrfToken = await getCookie('XSRF-TOKEN');
 
     fetch('/login', { // Using relative URL since proxy handles routing
       method: 'POST',
@@ -136,7 +141,7 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
 
   const handleGoogleLogin = () => {
     // Temporarily use full URL to bypass proxy issues
-    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    window.location.href = '/oauth2/authorization/google';
   };
 
   // Inline styles for centering and aligning inputs

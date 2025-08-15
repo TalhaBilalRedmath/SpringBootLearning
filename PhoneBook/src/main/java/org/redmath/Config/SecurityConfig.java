@@ -68,7 +68,8 @@ public class SecurityConfig {
             "/api/saveContact",
             "/h2-console/**",
             "/putTesting.html",
-            "/users"
+            "/users",
+            "/csrf"
     };
 
     @Autowired
