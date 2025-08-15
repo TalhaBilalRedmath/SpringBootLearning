@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
-import Login from './components/Login.tsx';
-
-const API_BASE = 'http://localhost:8080';
+import Login from './components/Login.tsx'; // Your updated Login component
 
 function Contacts({ onLogout }: { onLogout: () => void }) {
   const jwt = localStorage.getItem('jwt');
@@ -14,11 +12,23 @@ function Contacts({ onLogout }: { onLogout: () => void }) {
 
   // Fetch contacts from backend
   const getContacts = () => {
-    fetch(`${API_BASE}/api/getContacts`, {
+    fetch('/api/getContacts', { // Using relative URL
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
-      .then(res => res.json())
-      .then(data => setContacts(data))
+      .then(res => {
+        if (res.status === 401) {
+          // JWT expired or invalid, logout user
+          alert('Session expired. Please login again.');
+          onLogout();
+          return;
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (data) {
+          setContacts(data);
+        }
+      })
       .catch(() => setContacts([]));
   };
 
@@ -33,12 +43,20 @@ function Contacts({ onLogout }: { onLogout: () => void }) {
       alert('Please enter both name and number.');
       return;
     }
-    fetch(`${API_BASE}/api/saveContact`, {
+    fetch('/api/saveContact', { // Using relative URL
       method: 'POST',
-      headers: { 'Content-Type': 'application/json','Authorization': `Bearer ${jwt}` },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${jwt}` 
+      },
       body: JSON.stringify({ name: name.trim(), number: number.trim() })
     })
       .then(async response => {
+        if (response.status === 401) {
+          alert('Session expired. Please login again.');
+          onLogout();
+          return;
+        }
         if (response.ok) {
           alert('Contact Saved!');
           setName('');
@@ -58,11 +76,16 @@ function Contacts({ onLogout }: { onLogout: () => void }) {
   // Delete all contacts
   const deleteAll = () => {
     if (!window.confirm('Are you sure you want to delete all contacts?')) return;
-    fetch(`${API_BASE}/api/deleteAll`, {
+    fetch('/api/deleteAll', { // Using relative URL
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
       .then(response => {
+        if (response.status === 401) {
+          alert('Session expired. Please login again.');
+          onLogout();
+          return;
+        }
         if (response.ok) {
           alert('Deleted All Contacts');
           getContacts();
@@ -76,11 +99,16 @@ function Contacts({ onLogout }: { onLogout: () => void }) {
   // Delete a single contact
   const deleteContact = (name: string, id: number) => {
     if (!window.confirm(`Are you sure you want to delete contact: ${name}?`)) return;
-    fetch(`${API_BASE}/api/deleteContact/${encodeURIComponent(id)}`, {
+    fetch(`/api/deleteContact/${encodeURIComponent(id)}`, { // Using relative URL
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${jwt}` }
     })
       .then(response => {
+        if (response.status === 401) {
+          alert('Session expired. Please login again.');
+          onLogout();
+          return;
+        }
         if (response.ok) {
           alert(`Deleted ${name}`);
           getContacts();
@@ -101,12 +129,20 @@ function Contacts({ onLogout }: { onLogout: () => void }) {
   };
 
   const updateContact = (id: number, name: string, number: string) => {
-    fetch(`${API_BASE}/api/updateContact`, {
+    fetch('/api/updateContact', { // Using relative URL
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${jwt}` 
+      },
       body: JSON.stringify({ id, name, number })
     })
       .then(response => {
+        if (response.status === 401) {
+          alert('Session expired. Please login again.');
+          onLogout();
+          return;
+        }
         if (response.ok) {
           alert(`Updated contact: ${name}`);
           getContacts();
@@ -120,6 +156,7 @@ function Contacts({ onLogout }: { onLogout: () => void }) {
   // Logout handler
   const handleLogout = () => {
     localStorage.removeItem('jwt');
+    localStorage.removeItem('userEmail');
     onLogout();
   };
 
@@ -216,7 +253,11 @@ const Root = () => {
 
   return (
     <React.StrictMode>
-      {!isLoggedIn ? <Login setIsLoggedIn={setIsLoggedIn} /> : <Contacts onLogout={() => setIsLoggedIn(false)} />}
+      {!isLoggedIn ? (
+        <Login setIsLoggedIn={setIsLoggedIn} />
+      ) : (
+        <Contacts onLogout={() => setIsLoggedIn(false)} />
+      )}
     </React.StrictMode>
   );
 };

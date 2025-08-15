@@ -62,7 +62,7 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
   // Helper function to verify token validity
   const verifyToken = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/verify-token', {
+      const response = await fetch('/api/verify-token', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -84,22 +84,34 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
     }
   };
 
+  
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const loginRequest = { username, password };
+    // Create FormData for form login (Spring Security expects form data, not JSON)
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', password);
+    const csrfToken = getCookie('XSRF-TOKEN');
 
-    fetch('http://localhost:8080/api/login', {
+    fetch('/login', { // Using relative URL since proxy handles routing
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(loginRequest),
+      body: formData,
+      credentials: 'include', // Important for session handling
+      headers: {
+        'X-XSRF-TOKEN': csrfToken || ''
+      }
     })
       .then(async res => {
         setLoading(false);
         if (res.ok) {
           const data = await res.json();
+          console.log('Login successful:', data);
           alert('Login successful');
+          
+          // Store JWT token
           if (data.access_token) {
             localStorage.setItem('jwt', data.access_token);
           }
@@ -108,9 +120,11 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
           }
           setIsLoggedIn(true);
         } else if (res.status === 401) {
-          alert('Invalid credentials');
+          const errorData = await res.json().catch(() => ({}));
+          alert(errorData.error || 'Invalid credentials');
         } else {
-          alert('Login failed');
+          const errorData = await res.json().catch(() => ({}));
+          alert(errorData.error || 'Login failed');
         }
       })
       .catch(err => {
@@ -121,6 +135,7 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
   };
 
   const handleGoogleLogin = () => {
+    // Temporarily use full URL to bypass proxy issues
     window.location.href = 'http://localhost:8080/oauth2/authorization/google';
   };
 
@@ -209,6 +224,7 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
         <form onSubmit={handleLogin} style={{ width: '100%' }}>
           <input
             type="text"
+            name="username"
             placeholder="Username"
             value={username}
             onChange={e => setUsername(e.target.value)}
@@ -217,6 +233,7 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
           />
           <input
             type="password"
+            name="password"
             placeholder="Password"
             value={password}
             onChange={e => setPassword(e.target.value)}
@@ -240,25 +257,25 @@ const Login = ({ setIsLoggedIn }: { setIsLoggedIn: (isLoggedIn: boolean) => void
         </div>
         <button onClick={handleGoogleLogin} style={googleButtonStyle}>
           <svg width="18" height="18" viewBox="0 0 48 48" style={{ verticalAlign: 'middle' }}>
-  <g>
-    <path
-      fill="#4285F4"
-      d="M44.5 20H24v8.5h11.7C34.7 33.1 29.8 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c2.6 0 5 .8 7 2.3l6.4-6.4C33.5 6.5 28.1 4 22 4 11.5 4 3 12.5 3 23s8.5 19 19 19c10.5 0 18.5-7.5 18.5-18 0-1.2-.1-2.1-.3-3z"
-    />
-    <path
-      fill="#34A853"
-      d="M6.3 14.7l7 5.1C15.3 17.1 19.3 14 24 14c2.6 0 5 .8 7 2.3l6.4-6.4C33.5 6.5 28.1 4 22 4c-7.2 0-13.2 4.1-16.2 10.7z"
-    />
-    <path
-      fill="#FBBC05"
-      d="M24 44c5.6 0 10.3-1.8 13.7-4.9l-6.3-5.2C29.8 36 27 37 24 37c-5.7 0-10.6-3.9-12.3-9.1l-7 5.4C7.8 39.9 15.3 44 24 44z"
-    />
-    <path
-      fill="#EA4335"
-      d="M44.5 20H24v8.5h11.7c-1.1 3.1-4.1 5.5-7.7 5.5-2.2 0-4.2-.7-5.7-2l-7 5.4C17.7 41.1 20.7 44 24 44c10.5 0 18.5-7.5 18.5-18 0-1.2-.1-2.1-.3-3z"
-    />
-  </g>
-</svg>
+            <g>
+              <path
+                fill="#4285F4"
+                d="M44.5 20H24v8.5h11.7C34.7 33.1 29.8 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c2.6 0 5 .8 7 2.3l6.4-6.4C33.5 6.5 28.1 4 22 4 11.5 4 3 12.5 3 23s8.5 19 19 19c10.5 0 18.5-7.5 18.5-18 0-1.2-.1-2.1-.3-3z"
+              />
+              <path
+                fill="#34A853"
+                d="M6.3 14.7l7 5.1C15.3 17.1 19.3 14 24 14c2.6 0 5 .8 7 2.3l6.4-6.4C33.5 6.5 28.1 4 22 4c-7.2 0-13.2 4.1-16.2 10.7z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M24 44c5.6 0 10.3-1.8 13.7-4.9l-6.3-5.2C29.8 36 27 37 24 37c-5.7 0-10.6-3.9-12.3-9.1l-7 5.4C7.8 39.9 15.3 44 24 44z"
+              />
+              <path
+                fill="#EA4335"
+                d="M44.5 20H24v8.5h11.7c-1.1 3.1-4.1 5.5-7.7 5.5-2.2 0-4.2-.7-5.7-2l-7 5.4C17.7 41.1 20.7 44 24 44c10.5 0 18.5-7.5 18.5-18 0-1.2-.1-2.1-.3-3z"
+              />
+            </g>
+          </svg>
           Google
         </button>
       </div>
