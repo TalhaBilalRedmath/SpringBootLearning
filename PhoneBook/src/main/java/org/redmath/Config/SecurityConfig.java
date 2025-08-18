@@ -101,7 +101,7 @@ public class SecurityConfig {
     public AuthenticationSuccessHandler oauth2LoginSuccessHandler(JwtEncoder jwtEncoder) {
         return (request, response, authentication) -> {
             String jwtToken = generateJwtToken(authentication, jwtEncoder);
-            String redirectUrl = "http:localhost:3000/?token=" + jwtToken + "&email=" + authentication.getName();
+            String redirectUrl = "http://localhost:3000/?token=" + jwtToken + "&email=" + authentication.getName();
             response.sendRedirect(redirectUrl);
         };
     }
